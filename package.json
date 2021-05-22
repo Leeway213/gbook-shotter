@@ -45,9 +45,18 @@
     "vue-template-compiler": "^2.6.11"
   },
   "dependencies": {
+    "@types/file-saver": "^2.0.2",
+    "@types/jquery": "^3.5.5",
+    "@types/url-parse": "^1.4.3",
+    "core-js": "^3.12.1",
+    "file-saver": "^2.0.5",
+    "jquery": "^3.6.0",
+    "jszip": "^3.6.0",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
+    "regenerator-runtime": "^0.13.7",
     "styled-components": "^5.1.0",
+    "url-parse": "^1.5.1",
     "vue": "^2.6.11"
   }
 }
