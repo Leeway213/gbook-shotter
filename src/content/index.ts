@@ -10,8 +10,8 @@ function parseQuery(queryString: string) {
   const query: any = {};
   var pairs = (queryString[0] === '?' ? queryString.substr(1) : queryString).split('&');
   for (var i = 0; i < pairs.length; i++) {
-      var pair = pairs[i].split('=');
-      query[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1] || '');
+    var pair = pairs[i].split('=');
+    query[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1] || '');
   }
   return query;
 }
@@ -63,12 +63,58 @@ async function tickShot() {
   }
 }
 
+async function captureBookmate(bookId: string) {
+  const nextPage = () => {
+    const pagination = $('.pagination.pagination_forward');
+    pagination.click();
+  }
+  let text = '';
+  let id: string | undefined = '';
+  let stop = false;
+  window.addEventListener('beforeunload', (e) => {
+    let evt = window.event || e;
+    stop = true;
+    if (text) {
+      evt.returnValue = '即将下载';
+      const file = new Blob([text], {type: 'txt'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(file);
+      a.download = bookId;
+      a.click();
+    }
+  });
+  while (!stop) {
+    const content = document.querySelector('.paginated-content');
+    console.log('content -->', content);
+    if (content) {
+      const ps = content.querySelectorAll('p');
+      if (ps.length > 0) {
+        const _id = ps[0].id;
+        if (_id !== id) {
+          id = _id;
+          for (const p of ps) {
+            text += (p.innerText + '\n');
+          }
+        }
+      }
+    }
+
+    console.log(text);
+    nextPage();
+    await new Promise(resolve => setTimeout(resolve, 100));
+  }
+}
+
 chrome.runtime.onMessage.addListener((msg, sender, res) => {
   console.log(msg);
   const { type } = msg;
   switch (type) {
     case 'start-shot':
       tickShot().then(() => res({ type: 'start-shot', status: 'completed' }));
+      break;
+    case 'start-bookmate':
+      const bookId = msg.bookId;
+      captureBookmate(bookId).then(() => res({ type: 'start-bookmate', status: 'complete' }));
       break;
 
     default:

@@ -1,10 +1,18 @@
 <template>
   <div class="container">
-    <h2>{{message}}</h2>
-    <p>{{url}}</p>
-    <p>{{parsedUrl && parsedUrl.host}}</p>
-    <p>{{parsedUrl && parsedUrl.pathname}}</p>
-    <button :disabled="!isGBook || running" @click="startShot">{{running ? 'loading' : 'start'}}</button>
+    <h2>{{ message }}</h2>
+    <p>{{ url }}</p>
+    <p>{{ parsedUrl && parsedUrl.host }}</p>
+    <p>{{ parsedUrl && parsedUrl.pathname }}</p>
+    <button :disabled="!isGBook || running" @click="startShot">
+      {{ running ? "loading" : "start cap gbook" }}
+    </button>
+    <button :disabled="!isBookmate || running" @click="openBookmateReader">
+      {{ running ? "loading" : "navigate to reader" }}
+    </button>
+    <button :disabled="!isBookmateReader || running" @click="startBookmate">
+      {{ running ? "loading" : "start capture" }}
+    </button>
   </div>
 </template>
 
@@ -28,6 +36,21 @@ export default Vue.extend({
         });
         this.running = true;
       }
+    },
+    openBookmateReader() {
+      chrome.tabs.create({
+        url: `https://reader.bookmate.com/${this.bookmateId}`;
+      });
+    },
+    startBookmate() {
+      const id = this.currentTab?.id;
+      if (id) {
+        chrome.tabs.sendMessage(id, { type: 'start-bookmate', bookId: this.bookmateId }, res => {
+          console.log(res);
+          this.running = false;
+        });
+        this.running = true;
+      }
     }
   },
   computed: {
@@ -35,8 +58,23 @@ export default Vue.extend({
       return (this as any).url && new URL((this as any).url);
     },
     isGBook() {
-      return (this as any).parsedUrl.host.includes('books.google.com') &&
+      return (this as any).parsedUrl && (this as any).parsedUrl.host.includes('books.google.com') &&
       (this as any).parsedUrl.pathname === '/books'
+    },
+    isBookmate() {
+      return (this as any).parsedUrl && (this as any).parsedUrl.host.includes('bookmate.com') &&
+      (this as any).parsedUrl.pathname.startsWith('/reader');
+    },
+    isBookmateReader() {
+      return (this as any).parsedUrl && (this as any).parsedUrl.host.includes('reader.bookmate.com');
+    },
+    bookmateId() {
+      if (this.isBookmate) {
+        return (this as any).parsedUrl.pathname.split('/')[2];
+      } else if (this.isBookmateReader) {
+        return (this as any).parsedUrl.pathname.split('/')[1];
+      }
+      return '';
     }
   },
   data() {
