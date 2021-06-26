@@ -71,18 +71,19 @@ async function captureBookmate(bookId: string) {
   let text = '';
   let id: string | undefined = '';
   let stop = false;
-  window.addEventListener('beforeunload', (e) => {
-    let evt = window.event || e;
+  const onFinish = () => {
     stop = true;
     if (text) {
-      evt.returnValue = '即将下载';
-      const file = new Blob([text], {type: 'txt'});
+      const file = new Blob([text], { type: 'txt' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(file);
       a.download = bookId;
       a.click();
     }
-  });
+    window.removeEventListener('befureunload', onFinish);
+  };
+  window.addEventListener('beforeunload', onFinish);
+  let timer = 0;
   while (!stop) {
     const content = document.querySelector('.paginated-content');
     console.log('content -->', content);
@@ -91,6 +92,9 @@ async function captureBookmate(bookId: string) {
       if (ps.length > 0) {
         const _id = ps[0].id;
         if (_id !== id) {
+          if (timer) {
+            clearTimeout(timer);
+          }
           id = _id;
           for (const p of ps) {
             text += (p.innerText + '\n');
@@ -102,6 +106,7 @@ async function captureBookmate(bookId: string) {
     console.log(text);
     nextPage();
     await new Promise(resolve => setTimeout(resolve, 100));
+    timer = setTimeout(onFinish, 5000);
   }
 }
 
@@ -114,10 +119,14 @@ chrome.runtime.onMessage.addListener((msg, sender, res) => {
       break;
     case 'start-bookmate':
       const bookId = msg.bookId;
-      captureBookmate(bookId).then(() => res({ type: 'start-bookmate', status: 'complete' }));
+      captureBookmate(bookId).then(() => chrome.runtime.sendMessage({ type: 'start-bookmate', status: 'complete' })).finally(() => window.close());
       break;
 
     default:
       break;
   }
+});
+
+chrome.runtime.sendMessage({
+  type: 'content-loaded'
 });

@@ -4,6 +4,10 @@
     <p>{{ url }}</p>
     <p>{{ parsedUrl && parsedUrl.host }}</p>
     <p>{{ parsedUrl && parsedUrl.pathname }}</p>
+    <div style="width: 400px; height: 400px">
+      <textarea style="width: 100%; height: 90%;" v-model="batchTasks"></textarea>
+      <button @click="batchBookmate">开始批量采集bootmate</button>
+    </div>
     <button :disabled="!isGBook || running" @click="startShot">
       {{ running ? "loading" : "start cap gbook" }}
     </button>
@@ -39,7 +43,7 @@ export default Vue.extend({
     },
     openBookmateReader() {
       chrome.tabs.create({
-        url: `https://reader.bookmate.com/${this.bookmateId}`;
+        url: `https://reader.bookmate.com/${this.bookmateId}`
       });
     },
     startBookmate() {
@@ -50,6 +54,15 @@ export default Vue.extend({
           this.running = false;
         });
         this.running = true;
+      }
+    },
+    batchBookmate() {
+      if (this.batchTasks) {
+        const tasks = this.batchTasks.split('\n');
+        chrome.runtime.sendMessage({
+          type: 'batch-bookmate',
+          value: tasks,
+        });
       }
     }
   },
@@ -83,6 +96,7 @@ export default Vue.extend({
       url: "",
       currentTab: null as chrome.tabs.Tab | null,
       running: false,
+      batchTasks: '',
     };
   },
 });
