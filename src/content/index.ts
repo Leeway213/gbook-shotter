@@ -83,7 +83,7 @@ async function captureBookmate(bookId: string) {
     window.removeEventListener('befureunload', onFinish);
   };
   window.addEventListener('beforeunload', onFinish);
-  let timer = 0;
+  let timeout = 0;
   while (!stop) {
     const content = document.querySelector('.paginated-content');
     console.log('content -->', content);
@@ -92,9 +92,7 @@ async function captureBookmate(bookId: string) {
       if (ps.length > 0) {
         const _id = ps[0].id;
         if (_id !== id) {
-          if (timer) {
-            clearTimeout(timer);
-          }
+          timeout = 0;
           id = _id;
           for (const p of ps) {
             text += (p.innerText + '\n');
@@ -106,7 +104,10 @@ async function captureBookmate(bookId: string) {
     console.log(text);
     nextPage();
     await new Promise(resolve => setTimeout(resolve, 100));
-    timer = setTimeout(onFinish, 5000);
+    timeout++;
+    if (timeout > 50) {
+      break;
+    }
   }
 }
 
