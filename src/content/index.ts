@@ -85,6 +85,10 @@ async function captureBookmate(bookId: string) {
   window.addEventListener('beforeunload', onFinish);
   let timeout = 0;
   while (!stop) {
+    await new Promise(resolve => setTimeout(resolve, 100));
+    if (document.querySelector('.reader_loading')) {
+      continue;
+    }
     const content = document.querySelector('.paginated-content');
     console.log('content -->', content);
     if (content) {
@@ -103,9 +107,8 @@ async function captureBookmate(bookId: string) {
 
     console.log(text);
     nextPage();
-    await new Promise(resolve => setTimeout(resolve, 100));
     timeout++;
-    if (timeout > 50) {
+    if (timeout > 100) {
       break;
     }
   }
